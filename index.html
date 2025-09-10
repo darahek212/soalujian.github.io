@@ -1,154 +1,325 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>SKS</title>
-  <link rel="icon" href="https://cdn-icons-png.freepik.com/512/3182/3182563.png" />
+  <link rel="icon" href="https://cdn-icons-png.freepik.com/512/3182/3182563.png">
+  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    :root{
+      --accent1:#7e9bff;
+      --accent2:#c8a7ff;
+      --bg:#f6f8ff;
+      --muted:#6b7280;
+      --radius:12px;
+    }
+    body{font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background:linear-gradient(180deg,var(--bg),#ffffff); padding-bottom:100px;}
+    .container-app{max-width:980px;margin:28px auto;padding:16px;}
+    .card-app{border-radius:var(--radius); box-shadow:0 12px 36px rgba(12,16,40,0.06); overflow:hidden; background:#fff;}
+    .card-head{background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#fff; padding:16px;}
+    .card-body{padding:18px;}
+    .question-card{padding:12px;border-radius:10px;background:#fff;margin-bottom:10px;border:1px solid rgba(0,0,0,0.04);}
+    .btn-primary{border-radius:999px;background:linear-gradient(90deg,var(--accent2),var(--accent1)); border:none;}
+    footer.fixed-bottom{background:#0b1220;color:#fff;padding:10px 0;box-shadow:0 -6px 20px rgba(2,6,23,0.12);}
+    .small-muted{color:var(--muted);}
+    @media (max-width:576px){ .card-head h2{font-size:16px;} }
+  </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="container mt-5">
-  <!-- Login -->
-  <div id="loginCard" class="card shadow p-4">
-    <h3 class="text-center mb-3">Login SKS</h3>
-    <div class="mb-3">
-      <label for="username" class="form-label">Masukkan Username/Nama Lengkap</label>
-      <input type="text" id="username" class="form-control" placeholder="Nama lengkap Anda" required>
+<div class="container-app">
+  <div class="card-app">
+    <div class="card-head d-flex justify-content-between align-items-start">
+      <div>
+        <h2 style="margin:0">Sekarang Kerjakan Saja</h2>
+        <small style="opacity:0.95">50 soal pilihan ganda — benar = <strong>10 poin</strong> tiap soal</small>
+      </div>
+      <div class="text-end small-muted">
+        <div>Peserta: <strong id="headerUsername" style="color: white;">—</strong></div>
+        <div id="statusInfo" ></div>
+      </div>
     </div>
-    <button class="btn btn-primary w-100" onclick="login()">Mulai Ujian</button>
-  </div>
 
-  <!-- Quiz -->
-  <div id="quizCard" class="card shadow p-4 d-none">
-    <h3 class="text-center mb-3">SOAL DAN JAWABAN UJIAN MID SEMESTER LAN & WLAN</h3>
-    <form id="quizForm"></form>
-    <button type="submit" form="quizForm" class="btn btn-success w-100 mt-3">Selesai</button>
+    <div class="card-body">
+      <!-- LOGIN -->
+      <div id="loginView" class="mb-3">
+        <div class="row gx-2">
+          <div class="col-12 col-md-8 mb-2">
+            <label class="form-label">Nama Lengkap / Username</label>
+            <input id="usernameInput" class="form-control form-control-lg" placeholder="Contoh : Si Anu Cantik" />
+            <div class="form-text small-muted">Nama tidak boleh sama dengan pengguna lain (disimpan di perangkat).</div>
+          </div>
+          <div class="col-12 col-md-4 d-flex align-items-end">
+            <div class="w-100">
+              <button class="btn btn-primary w-100" id="startBtn">Mulai Ujian</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUIZ -->
+      <div id="quizView" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>Soal terjawab: <span id="answeredCount">0</span> / <span id="totalCount">50</span></div>
+          <div class="small-muted">Nilai maksimal: <strong>500</strong></div>
+        </div>
+
+        <div class="progress mb-3" style="height:10px; border-radius:999px;">
+          <div id="progressBar" class="progress-bar" role="progressbar" style="width:0%; background:linear-gradient(90deg,var(--accent1),var(--accent2));"></div>
+        </div>
+
+        <form id="quizForm">
+          <!-- questions injected here -->
+        </form>
+
+        <div class="d-grid gap-2 mt-3">
+          <button id="submitBtn" class="btn btn-success">Selesai</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Footer fixed -->
-<footer class="bg-dark text-white text-center py-2 fixed-bottom shadow">
-  <div class="container">
-    <small>SKS &copy; 2025 by Oski | Sekarang Kerjakan Saja</small>
+<footer class="fixed-bottom">
+  <div class="container d-flex justify-content-center">
+    <div>SKS &copy; 2025 by Oski | Sekarang Kerjakan Saja</div>
   </div>
 </footer>
 
 <script>
+/* ===========================
+   SOAL (50) & kunci jawaban
+   format: { q: "text", o: [optA,optB,optC,optD,optE], a: "a" }
+   =========================== */
 const questions = [
-  {q:"1. Ciri-ciri jaringan komputer adalah sebagai berikut ini, kecuali….",o:["Berbagi pakai perangkat keras (hardware)","Berbagi pakai perangkat lunak (software)","Berbagi user (brainware)","Berbagi saluran komunikasi (internet)","Berbagi data dengan mudah."],answer:"c"},
-  {q:"2. Setiap komputer yang terhubung ke jaringan dapat bertindak baik sebagai workstation maupun server disebut jaringan …",o:["Peer to peer","Client and server","Local Area Network","Bus","Tree"],answer:"a"},
-  {q:"3. Salah satu tipe jaringan komputer yang umum dijumpai adalah….",o:["Star","Bus","WAN","Wireless","Client-server"],answer:"e"},
-  {q:"4. … adalah sebuah perangkat untuk meneruskan Internet ke client yang terhubung dengan server.",o:["Proxy","Switch","Router","Gateway","Gatekeeper"],answer:"b"},
-  {q:"5. Skema desain pembangunan sebuah jaringan komputer dikenal dengan istilah….",o:["Tipe","Topologi","Geografi","Skalabilitas","Media transmisi"],answer:"b"},
-  {q:"6. Berikut ini jenis topologi jaringan komputer, kecuali ….",o:["Star","Bus","Ring","Mesh","Three"],answer:"e"},
-  {q:"7. Salah satu keuntungan jaringan komputer menggunakan topologi bus adalah ….",o:["Deteksi dan isolasi kesalahan sangat kecil","Kepadatan lalu lintas pada jalur utama","Diperlukan repeater untuk jarak jauh","Lay out kabel kompleks","Pengembangan jaringan mudah tanpa ganggu workstation lain"],answer:"d"},
-  {q:"8. Kombinasi pengkabelan straight pada jaringan komputer sesuai standar internasional adalah ….",o:["White orange – orange - white green – blue - white blue - green – white brown - brown","White orange – orange - white green – green - white blue - blue – white brown - brown","White green – green - white orange – blue - white blue - orange – white brown - brown","White orange – orange - white green - green - white blue - blue – white brown - brown","Orange – white orange – green – white green - white blue - blue – white brown - brown"],answer:"a"},
-  {q:"9. IP Address 126.46.5.6 termasuk dalam IP Address kelas ….",o:["A","B","C","D","E"],answer:"a"},
-  {q:"10. Software utiliti yang bekerja pada komputer dan didesain untuk memberikan IP Address ke komputer disebut ….",o:["DNS","Gateway","Protokol","DHCP","Ipconfig"],answer:"d"},
-  {q:"11. Perintah “PING” pada jaringan digunakan untuk hal-hal berikut ini, kecuali …",o:["Menguji fungsi kirim sebuah NIC","Menguji fungsi terima sebuah NIC","Menguji kesesuaian sebuah NIC","Menguji konfigurasi TCP/IP","Menguji koneksi jaringan"],answer:"d"},
-  {q:"12. Untuk melihat indikasi pada konfigurasi IP yang terpasang pada komputer kita digunakan perintah ….",o:["Ping","IPConfig","Tracert","Traceroute","Nslookup"],answer:"a"},
-  {q:"13. Tipe file yang digunakan oleh linux secara umum adalah ….",o:["INF","FAT","NTFS","EXT3","FAT32"],answer:"d"},
-  {q:"14. Umumnya apabila kita memiliki RAM sebesar 128 MB, maka alokasi minimal yang direkomendasikan untuk partisi linux swap adalah ….",o:["0 MB","64 MB","128 MB","256 MB","512 MB"],answer:"d"},
-  {q:"15. Untuk mengubah urut-urutan booting sebelum melakukan instalasi sistem operasi, kita harus melakukan setting pada ….",o:["BIOS","Kernel","TCP/IP","Windows","IP address"],answer:"a"},
-  {q:"16. Pembagian ruang dalam sebuah hardisk diistilahkan dengan ….",o:["Divisi","Partisi","Kernel","File system","Sistem Operasi"],answer:"b"},
-  {q:"17. Kemampuan sistem operasi untuk menjalankan berbagai perintah dalam waktu bersamaan disebut ….",o:["Multi user","Pipelining","Threading","Multking","Management"],answer:"d"},
-  {q:"18. Inti sebuah sistem operasi disebut ….",o:["Core","Linux","Kernel","Compiler","Windows"],answer:"c"},
-  {q:"19. Sistem yang bertugas mengatur semua perangkat lunak dan keras dalam sebuah komputer sehingga dapat digunakan oleh user disebut ….",o:["Sistem Operasi","Sistem Komputer","Sistem Manajemen","Sistem Pengaturan","Sistem Operasional"],answer:"a"},
-  {q:"20. Berapa kecepatan akses data pada access point yang memiliki standar kode IEEE 802.11g ….",o:["11Mb/s","54Mb/s","108Mb/s","216Mb/s","432Mb/s"],answer:"b"},
-  {q:"21. Berapa kecepatan akses data pada access point yang memiliki standar kode IEEE 802.11b ….",o:["11Mb/s","54Mb/s","108Mb/s","216Mb/s","432Mb/s"],answer:"a"},
-  {q:"22. Berapa frekuensi antena pada sebuah access point (WiFi)….",o:["2.4Ghz","3.1Ghz","1.9Ghz","5.2Ghz","4.2Ghz"],answer:"a"},
-  {q:"23. Teks perintah untuk melihat tabel routing pada Windows adalah ….",o:["route –n","route –a","route PRINT","route –D","route -t"],answer:"c"},
-  {q:"24. Teks perintah untuk memeriksa IP address di Linux adalah ….",o:["config","setconfig","read config","ipconfig","ifconfig"],answer:"e"},
-  {q:"25. Teks perintah untuk memeriksa IP address di Windows adalah ….",o:["config","setconfig","read config","ipconfig","ifconfig"],answer:"d"},
-  {q:"26. Perintah untuk memeriksa apakah koneksi jaringan kita sudah terhubung ke depdiknas.org adalah ….",o:["ls depdiknas.org","vi depdiknas.org","cp depdiknas.org","ping depdiknas.org","install depdiknas.org"],answer:"d"},
-  {q:"27. Salah satu aplikasi proxy server di sistem operasi Linux adalah ….",o:["Squid","Postfix","Squirrel","Apache","Postgres"],answer:"a"},
-  {q:"28. Perangkat yang berfungsi mengatur pemilihan jalur terbaik untuk dilewati paket data dikenal sebagai ….",o:["Switch","Router","Web server","Proxy server","Name server"],answer:"b"},
-  {q:"29. Komputer yang bertugas menyimpan informasi halaman web yang pernah diakses sebelumnya adalah ….",o:["Router","Web server","Proxy server","Name server","Database server"],answer:"c"},
-  {q:"30. Perangkat yang berfungsi sebagai repeater dan sekaligus concentrator dalam sebuah jaringan komputer adalah ….",o:["Hub/Switch","Server","Router","Kabel UTP","Connector"],answer:"a"},
-  {q:"31. Antar muka yang bertugas menerjemahkan satuan informasi terkecil di layer fisik adalah ….",o:["NIC/Lan Card","USB","RJ 45","Firewire","Kabel UTP"],answer:"a"},
-  {q:"32. 192.168.0.10 merupakan contoh pemberian alamat pada sebuah komputer dalam jaringan. Angka-angka tersebut dikenal dengan ….",o:["TCP/IP","Domain","Protokol","IP Address","Konfigurasi"],answer:"d"},
-  {q:"33. Satuan informasi terkecil yang dikenal dalam komunikasi data adalah ….",o:["Bit","Byte","Label","Packet","Segment"],answer:"a"},
-  {q:"34. IP Address yang menunjukkan nomor jaringan (identitas segmen) disebut dengan …",o:["Net ID","Host ID","IP Broadcast","IP Public","IP Private"],answer:"c"},
-  {q:"35. Angka 32 bit yang digunakan untuk membedakan Net ID dan Host ID disebut …",o:["Subnet Mask","Submask","IP Broadcast","IP Public","IP Private"],answer:"c"},
-  {q:"36. Subnet mask yang digunakan jaringan kelas A adalah…",o:["255.255.255.0","255.255.0.0","255.0.0.0","255.255.255.255","10.0.0.1"],answer:"c"},
-  {q:"37. Penulisan IP Address 11000000.10101000.00000001.00001000 dalam desimal adalah ….",o:["192.168.1.8","192.158.1.8","191.168.1.8","190.168.1.8","192.169.1.8"],answer:"a"},
-  {q:"38. Penulisan IP Address 10.208.15.240 dalam binary adalah ….",o:["00001010.11010000.00001111.11111000","00001010.11010000.00001111.11100000","00001010.11010000.00001111.11110000","00001010.11010000.00001111.11010000","00001010.11010000.00001111.10110000"],answer:"c"},
-  {q:"39. Tata cara atau peraturan internasional agar komputer bisa berkomunikasi disebut ….",o:["Proxy","Protocol","Prosedur","Proposal","Program"],answer:"b"},
-  {q:"40. Software utiliti yang mendesain untuk memberikan IP Address ke komputer disebut ….",o:["DNS","Gateway","Protokol","DHCP","Ipconfig"],answer:"d"},
-  {q:"41. Sistem yang memungkinkan nama host ditranslasikan menjadi IP address disebut ….",o:["DNS","Gateway","Protokol","DHCP","Ipconfig"],answer:"a"},
-  {q:"42. Untuk membuat berbagi koneksi internet, minimal komputer yang diperlukan ….",o:["1","2","3","4","5"],answer:"b"},
-  {q:"43. Dalam konfigurasi berbagi koneksi internet, IP Address komputer client dimulai pada alamat …",o:["192.168.0.1","192.168.0.2","10.0.0.1","127.0.0.1","202.15.0.1"],answer:"a"},
-  {q:"44. Dalam konfigurasi berbagi koneksi internet, komputer yang tersambung internet berfungsi sebagai …",o:["client","server / gateway","dump","switch","router"],answer:"b"},
-  {q:"45. Istilah ttl dalam perintah ping dimaksudkan …",o:["Time to loose","Time to live","Time to leave","Time to los","Time to lie"],answer:"d"},
-  {q:"46. Perintah untuk mengetahui jalur/rute domain di Windows XP adalah …",o:["ping","traceroute","tracert","ipconfig","ifconfig"],answer:"b"},
-  {q:"47. Perintah untuk mengetahui jalur/rute domain di Linux adalah …",o:["ping","traceroute","tracert","ipconfig","ifconfig"],answer:"c"},
-  {q:"48. Direktori linux untuk file penting pemeliharaan sistem adalah …",o:["/home","/ect","/tmp","/bin","/var"],answer:"c"},
-  {q:"49. Untuk membuat direktori di linux digunakan perintah …",o:["cat","cd","chmod","md","mkdir"],answer:"e"},
-  {q:"50. Yang bukan perintah mengakhiri linux adalah…",o:["Shutdown –h now","Halt","Shutdown –r now","Reebot","Quit"],answer:"a"},
+  {q:"1. Ciri-ciri jaringan komputer adalah sebagai berikut ini, kecuali….", o:["Berbagi pakai perangkat keras (hardware)","Berbagi pakai perangkat lunak (software)","Berbagi user (brainware)","Berbagi saluran komunikasi (internet)","Berbagi data dengan mudah."], a:"c"},
+  {q:"2. Setiap komputer yang terhubung ke jaringan dapat bertindak baik sebagai workstation maupun server disebut jaringan …", o:["Peer to peer","Client and server","Local Area Network","Bus","Tree"], a:"a"},
+  {q:"3. Salah satu tipe jaringan komputer yang umum dijumpai adalah….", o:["Star","Bus","WAN","Wireless","Client-server"], a:"e"},
+  {q:"4. … adalah sebuah perangkat untuk meneruskan Internet ke client yang terhubung dengan server.", o:["Proxy","Switch","Router","Gateway","Gatekeeper"], a:"b"},
+  {q:"5. Skema desain pembangunan sebuah jaringan komputer dikenal dengan istilah….", o:["Tipe","Topologi","Geografi","Skalabilitas","Media transmisi"], a:"b"},
+  {q:"6. Berikut ini jenis topologi jaringan komputer, kecuali ….", o:["Star","Bus","Ring","Mesh","Three"], a:"e"},
+  {q:"7. Salah satu keuntungan jaringan komputer menggunakan topologi bus adalah ….", o:["Deteksi dan isolasi kesalahan sangat kecil","Kepadatan lalu lintas pada jalur utama","Diperlukan repeater untuk jarak jauh","Lay out kabel kompleks","Pengembangan jaringan atau penambahan workstation baru dapat dilakukan dengan mudah tanpa menggangu workstation lain."], a:"d"},
+  {q:"8. Kombinasi pengkabelan straight pada jaringan komputer yang sesuai dengan standart internasional adalah ….", o:["White orange – orange - white green – blue - white blue - green – white brown - brown","White orange – orange - white green – green - white blue - blue – white brown - brown","White green – green - white orange – blue - white blue - orange – white brown - brown","White orange – orange - white green - green - white blue - blue – white brown - brown","Orange – white orange – green – white green - white blue - blue – white brown - brown"], a:"a"},
+  {q:"9. IP Address 126.46.5.6 termasuk dalam IP Address kelas ….", o:["A","B","C","D","E"], a:"a"},
+  {q:"10. Software utiliti yang bekerja pada komputer dan didesain untuk memberikan IP Address ke komputer disebut ….", o:["DNS","Gateway","Protokol","DHCP","Ipconfig"], a:"d"},
+  {q:"11. Perintah “PING” pada jaringan digunakan untuk hal-hal yang berikut ini, kecuali …", o:["Menguji fungsi kirim sebuah NIC","Menguji fungsi terima sebuah NIC","Menguji kesesuaian sebuah NIC","Menguji konfigurasi TCP/IP","Menguji koneksi jaringan"], a:"d"},
+  {q:"12. Untuk melihat indikasi pada konfigurasi IP yang terpasang pada komputer kita digunakan perintah ….", o:["Ping","IPConfig","Tracert","Traceroute","Nslookup"], a:"a"},
+  {q:"13. Tipe file yang digunakan oleh linux secara umum adalah ….", o:["INF","FAT","NTFS","EXT3","FAT32"], a:"d"},
+  {q:"14. Umumnya apabila kita memiliki RAM sebesar 128 MB, maka alokasi minimal yang direkomendasikan untuk partisi linux swap adalah ….", o:["0 MB","64 MB","128 MB","256 MB","512 MB"], a:"d"},
+  {q:"15. Untuk mengubah urut-urutan booting sebelum melakukan instalasi sistem operasi, kita harus melakukan setting pada ….", o:["BIOS","Kernel","TCP/IP","Windows","IP address"], a:"a"},
+  {q:"16. Pembagian ruang dalam sebuah hardisk diistilahkan dengan ….", o:["Divisi","Partisi","Kernel","File system","Sistem Operasi"], a:"b"},
+  {q:"17. Kemampuan sistem operasi untuk menjalankan berbagai perintah dalam waktu bersamaan disebut ….", o:["Multi user","Pipelining","Threading","Multking","Management"], a:"d"},
+  {q:"18. Inti sebuah sistem operasi disebut ….", o:["Core","Linux","Kernel","Compiler","Windows"], a:"c"},
+  {q:"19. Sistem yang bertugas mengatur semua perangkat lunak dan keras dalam sebuah komputer sehingga dapat digunakan oleh user disebut sebagai ….", o:["Sistem Operasi","Sistem Komputer","Sistem Manajemen","Sistem Pengaturan","Sistem Operasional"], a:"a"},
+  {q:"20. Berapa kecepatan akses data pada access point yang memiliki standar kode IEEE 802.11g ….", o:["11Mb/s","54Mb/s","108Mb/s","216Mb/s","432Mb/s"], a:"b"},
+  {q:"21. Berapa kecepatan akses data pada access point yang memiliki standar kode IEEE 802.11b ….", o:["11Mb/s","54Mb/s","108Mb/s","216Mb/s","432Mb/s"], a:"a"},
+  {q:"22. Berapa frekuensi antena pada sebuah access point (WiFi)….", o:["2.4Ghz","3.1Ghz","1.9Ghz","5.2Ghz","4.2Ghz"], a:"a"},
+  {q:"23. Teks perintah untuk melihat tabel routing pada Windows adalah ….", o:["route –n","route –a","route PRINT","route –D","route -t"], a:"c"},
+  {q:"24. Teks perintah untuk memeriksa IP address yang kita miliki di Linux adalah ….", o:["config","setconfig","read config","ipconfig","ifconfig"], a:"e"},
+  {q:"25. Teks perintah untuk memeriksa IP address yang kita miliki di Windows adalah …", o:["config","setconfig","read config","ipconfig","ifconfig"], a:"d"},
+  {q:"26. Teks perintah untuk memeriksa apakah koneksi jaringan kita sudah terhubung ke depdiknas.org adalah ….", o:["ls depdiknas.org","vi depdiknas.org","cp depdiknas.org","ping depdiknas.org","install depdiknas.org"], a:"d"},
+  {q:"27. Salah satu aplikasi proxy server di sistem operasi Linux adalah ….", o:["Squid","Postfix","Squirrel","Apache","Postgres"], a:"a"},
+  {q:"28. Perangkat yang berfungsi mengatur pemilihan jalur terbaik untuk dilewati paket data dikenal sebagai ….", o:["Switch","Router","Web server","Proxy server","Name server"], a:"b"},
+  {q:"29. Komputer yang bertugas menyimpan informasi halaman web yang pernah diakses sebelumnya adalah ….", o:["Router","Web server","Proxy server","Name server","Database server"], a:"c"},
+  {q:"30. Perangkat yang berfungsi sebagai repeater dan sekaligus concentrator dalam sebuah jaringan komputer adalah ….", o:["Hub/Switch","Server","Router","Kabel UTP","Connector"], a:"a"},
+  {q:"31. Antar muka yang bertugas menerjemahkan satuan informasi terkecil di layer fisik adalah ….", o:["NIC/Lan Card","USB","RJ 45","Firewire","Kabel UTP"], a:"a"},
+  {q:"32. 192.168.0.10 merupakan contoh pemberian alamat pada sebuah komputer yang akan dihubungkan dalam sebuah jaringan. Angka-angka tersebut dikenal dengan ….", o:["TCP/IP","Domain","Protokol","IP Address","Konfigurasi"], a:"d"},
+  {q:"33. Satuan informasi terkecil yang dikenal dalam komunikasi data adalah ….", o:["Bit","Byte","Label","Packet","Segment"], a:"a"},
+  {q:"34. IP Address yang menunjukkan nomor jaringan (identitas segmen) disebut dengan …", o:["Net ID","Host ID","IP Broadcast","IP Public","IP Private"], a:"c"},
+  {q:"35. Angka 32 bit yang digunakan untuk membedakan Net ID dan Host ID disebut …", o:["Subnet Mask","Submask","IP Broadcast","IP Public","IP Private"], a:"c"},
+  {q:"36. Subnet mask yang digunakan jaringan kelas A adalah…", o:["255.255.255.0","255.255.0.0","255.0.0.0","255.255.255.255","10.0.0.1"], a:"c"},
+  {q:"37. Penulisan IP Address 11000000.10101000.00000001.00001000 dalam bentuk desimal ditulis sebagai berikut ….", o:["192.168.1.8","192.158.1.8","191.168.1.8","190.168.1.8","192.169.1.8"], a:"a"},
+  {q:"38. Penulisan IP Address 10.208.15.240 dalam bentuk binary ditulis sebagai berikut ….", o:["00001010.11010000.00001111.11111000","00001010.11010000.00001111.11100000","00001010.11010000.00001111.11110000","00001010.11010000.00001111.11010000","00001010.11010000.00001111.10110000"], a:"c"},
+  {q:"39. Tata cara atau peraturan yang disepakati secara internasional agar sebuah komputer bisa berkomunikasi dengan komputer lainnya disebut ….", o:["Proxy","Protocol","Prosedur","Proposal","Program"], a:"b"},
+  {q:"40. Software utiliti yang bekerja pada komputer dan didesain untuk memberikan IP Address ke komputer disebut ….", o:["DNS","Gateway","Protokol","DHCP","Ipconfig"], a:"d"},
+  {q:"41. Suatu sistem yang memungkinkan nama suatu host pada jaringan komputer atau internet ditranslasikan menjadi IP address disebut ….", o:["DNS","Gateway","Protokol","DHCP","Ipconfig"], a:"a"},
+  {q:"42. Untuk membuat berbagi pakai koneksi internet (internet connection sharing), minimal komputer yang diperlukan sebanyak ….", o:["1","2","3","4","5"], a:"b"},
+  {q:"43. Dalam konfigurasi berbagi pakai koneksi internet (internet connection sharing), IP Address komputer client yang digunakan dimulai pada alamat …", o:["192.168.0.1","192.168.0.2","10.0.0.1","127.0.0.1","202.15.0.1"], a:"a"},
+  {q:"44. Dalam konfigurasi berbagi pakai koneksi internet (internet connection sharing), komputer yang tersambung dengan internet akan berfungsi sebagai …", o:["client","server / gateway","dump","switch","router"], a:"b"},
+  {q:"45. Istilah ttl dalam perintah ping dimaksudkan …", o:["Time to loose","Time to live","Time to leave","Time to los","Time to lie"], a:"d"},
+  {q:"46. Perintah untuk mengetahui jalur / rute suatu domain komputer / website menggunakan pada system operasi Ms.Windows XP adalah ………", o:["ping","traceroute","tracert","ipconfig","ifconfig"], a:"b"},
+  {q:"47. Perintah untuk mengetahui jalur / rute suatu domain komputer / website menggunakan pada system Linux adalah ………", o:["ping","traceroute","tracert","ipconfig","ifconfig"], a:"c"},
+  {q:"48. Direktory yang dipergunakan untuk menyimpan file-file penting yang digunakan untuk pemeliharaan system operasi linux adalah ………", o:["/home","/ect","/tmp","/bin","/var"], a:"c"},
+  {q:"49. Untuk membuat direktori didalam system operasi linux digunakan perintah…", o:["cat","cd","chmod","md","mkdir"], a:"e"},
+  {q:"50. Yang bukan merupakan perintah mengakhiri linux adalah…", o:["Shutdown –h now","Halt","Shutdown –r now","Reebot","Quit"], a:"a"}
 ];
 
-let usedUsernames = JSON.parse(localStorage.getItem("usedUsernames")) || [];
+/* ===========================
+   initialize
+   =========================== */
+const total = questions.length;
+document.getElementById('totalCount').innerText = total;
 
-function login(){
-  const username = document.getElementById("username").value.trim();
+// load usedUsernames from localStorage
+let usedUsernames = JSON.parse(localStorage.getItem('usedUsernames') || '[]');
+
+// create question elements
+function renderQuestions(){
+  const form = document.getElementById('quizForm');
+  form.innerHTML = '';
+  questions.forEach((item, idx) => {
+    const box = document.createElement('div');
+    box.className = 'question-card';
+    let html = `<div><strong>${item.q}</strong></div><div class="mt-2">`;
+    const letters = ['a','b','c','d','e'];
+    item.o.forEach((opt, i) => {
+      const id = `q_${idx}_${letters[i]}`;
+      html += `<div class="form-check">
+                <input class="form-check-input" type="radio" name="q${idx}" id="${id}" value="${letters[i]}" onchange="updateProgress()">
+                <label class="form-check-label" for="${id}">${letters[i]}. ${opt}</label>
+               </div>`;
+    });
+    html += `</div>`;
+    box.innerHTML = html;
+    form.appendChild(box);
+  });
+}
+
+// progress update
+function updateProgress(){
+  let answered = 0;
+  for(let i=0;i<total;i++){
+    if(document.querySelector(`input[name="q${i}"]:checked`)) answered++;
+  }
+  document.getElementById('answeredCount').innerText = answered;
+  const pct = Math.round((answered/total)*100);
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+// start quiz
+document.getElementById('startBtn').addEventListener('click', () => {
+  const username = (document.getElementById('usernameInput').value || '').trim();
   if(!username){
-    Swal.fire("Error","Username tidak boleh kosong!","error");
+    Swal.fire('Nama kosong','Silakan masukkan nama lengkap atau username.','warning');
     return;
   }
   if(usedUsernames.includes(username)){
-    Swal.fire("Error","Username sudah digunakan!","error");
+    Swal.fire('Nama sudah dipakai','Username ini sudah digunakan sebelumnya. Gunakan nama lain.','error');
     return;
   }
+  // store username
   usedUsernames.push(username);
-  localStorage.setItem("usedUsernames", JSON.stringify(usedUsernames));
-  localStorage.setItem("quiz_username", username);
+  localStorage.setItem('usedUsernames', JSON.stringify(usedUsernames));
+  localStorage.setItem('quiz_username', username);
 
-  document.getElementById("loginCard").classList.add("d-none");
-  document.getElementById("quizCard").classList.remove("d-none");
+  // show quiz
+  document.getElementById('headerUsername').innerText = username;
+  document.getElementById('loginView').style.display = 'none';
+  document.getElementById('quizView').style.display = 'block';
 
-  loadQuestions();
-}
-
-function loadQuestions(){
-  const form = document.getElementById("quizForm");
-  form.innerHTML = "";
-  questions.forEach((q, index)=>{
-    let html = `<div class="mb-3"><p><b>${q.q}</b></p>`;
-    const labels = ["a","b","c","d","e"];
-    q.o.forEach((opt,i)=>{
-      html += `
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="q${index}" value="${labels[i]}">
-          <label class="form-check-label">${labels[i]}. ${opt}</label>
-        </div>`;
-    });
-    html += `</div>`;
-    form.innerHTML += html;
-  });
-}
-
-document.getElementById("quizForm").addEventListener("submit", function(e){
-  e.preventDefault();
-  let score = 0;
-  questions.forEach((q,i)=>{
-    const answer = document.querySelector(`input[name="q${i}"]:checked`);
-    if(answer && answer.value === q.answer){
-      score += 10;
-    }
-  });
-
-  const username = localStorage.getItem("quiz_username");
-
-  Swal.fire({
-    icon:"success",
-    title:"Hasil Ujian Kamu",
-    html:`<b>Username:</b> ${username}<br><b>Skor:</b> ${score}`,
-    confirmButtonText:"OK"
-  });
+  renderQuestions();
+  updateProgress();
+  window.scrollTo({top:0, behavior:'smooth'});
 });
+
+// submit handler
+document.getElementById('submitBtn').addEventListener('click', async () => {
+  // confirm
+  const confirm = await Swal.fire({
+    title: 'Kirim jawaban?',
+    text: 'Setelah dikirim, jawaban tidak bisa diubah.',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, kirim',
+    cancelButtonText: 'Belum'
+  });
+  if(!confirm.isConfirmed) return;
+
+  // calculate score and collect answers
+  let score = 0;
+  const answers = [];
+  for(let i=0;i<total;i++){
+    const sel = document.querySelector(`input[name="q${i}"]:checked`);
+    answers.push(sel ? sel.value : '');
+    if(sel && sel.value === questions[i].a) score += 10;
+  }
+  const username = localStorage.getItem('quiz_username') || 'Tidak diketahui';
+
+  // save to localStorage history
+  const history = JSON.parse(localStorage.getItem('ujian_history') || '[]');
+  const record = { username, score, date: new Date().toLocaleString(), answers };
+  history.push(record);
+  localStorage.setItem('ujian_history', JSON.stringify(history));
+
+  // disable all inputs
+  document.querySelectorAll('input[type="radio"]').forEach(r=> r.disabled = true);
+
+  // show result with option download .txt
+  const res = await Swal.fire({
+    title: 'Hasil Ujian',
+    html: `<div style="text-align:left"><p><strong>Username:</strong> ${escapeHtml(username)}</p>
+           <p><strong>Skor:</strong> ${score} / ${total*10}</p></div>`,
+    showCancelButton: true,
+    confirmButtonText: 'Download Hasil (.txt)',
+    cancelButtonText: 'Tutup',
+    icon: 'success',
+    width: 460
+  });
+
+  if(res.isConfirmed){
+    downloadResultTxt(record);
+  }
+});
+
+// helper: escape
+function escapeHtml(str){
+  return String(str).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;');
+}
+
+// create and download .txt file
+function downloadResultTxt(record){
+  const leftPad = (n)=> n.toString().padStart(2,'0');
+  let content = '';
+  content += 'Hasil Ujian SKS by Oski\n';
+  content += `Nama Peserta : ${record.username}\n`;
+  content += `Skor Akhir   : ${record.score} / ${total*10}\n`;
+  content += `Tanggal      : ${record.date}\n\n`;
+  content += 'Ringkasan Jawaban (No. - Jawab - Kunci - Hasil)\n';
+  for(let i=0;i<questions.length;i++){
+    const num = leftPad(i+1);
+    const given = record.answers[i] ? record.answers[i].toUpperCase() : '-';
+    const key = questions[i].a.toUpperCase();
+    const ok = (record.answers[i] && record.answers[i] === questions[i].a) ? 'Benar' : 'Salah';
+    content += `${num}. Jawab: ${given} | Kunci: ${key} → ${ok}\n`;
+  }
+  content += '\n© SKS &copy; 2025 by Oski | Sekarang Kerjakan Saja\n';
+
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+  const filename = `hasil_${record.username.replaceAll(' ','_')}_${(new Date()).toISOString().slice(0,19).replaceAll(':','-')}.txt`;
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+// optional: expose function to view history (for teacher on same machine)
+function viewLocalHistory(){
+  const history = JSON.parse(localStorage.getItem('ujian_history') || '[]');
+  if(history.length === 0){
+    Swal.fire('Tidak ada riwayat','Belum ada hasil tersimpan di browser ini.','info');
+    return;
+  }
+  let html = '<div style="text-align:left; max-height:400px; overflow:auto;">';
+  history.slice().reverse().forEach(h => {
+    html += `<p><b>${escapeHtml(h.username)}</b> — ${escapeHtml(h.date)} — Skor: ${h.score}</p>`;
+  });
+  html += '</div>';
+  Swal.fire({ title: 'Riwayat Hasil (localStorage)', html, width:600 });
+}
+
+// utility: allow teacher to clear local history (optional)
+function clearLocalHistory(){
+  if(!confirm('Hapus semua riwayat localStorage di browser ini?')) return;
+  localStorage.removeItem('ujian_history');
+  alert('Riwayat dihapus.');
+}
 </script>
 </body>
 </html>
