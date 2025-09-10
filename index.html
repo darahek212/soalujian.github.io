@@ -9,24 +9,26 @@
 </head>
 <body class="bg-light">
 
-<div class="container my-4 mb-5">
-  <h2 class="text-center mb-4">SKS (Sekarang Kerjakan Saja)</h2>
-  <div id="loginBox" class="card p-4 shadow-sm">
+<div class="container mt-5">
+  <!-- Login -->
+  <div id="loginCard" class="card shadow p-4">
+    <h3 class="text-center mb-3">Login SKS</h3>
     <div class="mb-3">
-      <label class="form-label">Masukkan Nama Lengkap / Username</label>
-      <input type="text" id="username" class="form-control" placeholder="Nama lengkap">
+      <label for="username" class="form-label">Masukkan Username/Nama Lengkap</label>
+      <input type="text" id="username" class="form-control" placeholder="Nama lengkap Anda" required>
     </div>
-    <button class="btn btn-primary w-100" onclick="startQuiz()">Mulai</button>
+    <button class="btn btn-primary w-100" onclick="login()">Mulai Ujian</button>
   </div>
 
-  <div id="quizBox" style="display:none;">
-    <h4 class="mb-3">Soal Pilihan Ganda</h4>
+  <!-- Quiz -->
+  <div id="quizCard" class="card shadow p-4 d-none">
+    <h3 class="text-center mb-3">SOAL DAN JAWABAN UJIAN MID SEMESTER LAN & WLAN</h3>
     <form id="quizForm"></form>
-    <button class="btn btn-success mt-3" onclick="submitQuiz()">Selesai</button>
+    <button type="submit" form="quizForm" class="btn btn-success w-100 mt-3">Selesai</button>
   </div>
 </div>
 
-<!-- Fixed Footer -->
+<!-- Footer fixed -->
 <footer class="bg-dark text-white text-center py-2 fixed-bottom shadow">
   <div class="container">
     <small>SKS &copy; 2025 by Oski | Sekarang Kerjakan Saja</small>
@@ -141,7 +143,7 @@ document.getElementById("quizForm").addEventListener("submit", function(e){
 
   Swal.fire({
     icon:"success",
-    title:"Hasil Ujian",
+    title:"Hasil Ujian Kamu",
     html:`<b>Username:</b> ${username}<br><b>Skor:</b> ${score}`,
     confirmButtonText:"OK"
   });
