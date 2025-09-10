@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kerjakan!</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-light">
+
+<div class="container my-4 mb-5">
+  <h2 class="text-center mb-4">Login!</h2>
+  <div id="loginBox" class="card p-4 shadow-sm">
+    <div class="mb-3">
+      <label class="form-label">Masukkan Nama Lengkap / Username</label>
+      <input type="text" id="username" class="form-control" placeholder="Nama lengkap">
+    </div>
+    <button class="btn btn-primary w-100" onclick="startQuiz()">Mulai</button>
+  </div>
+
+  <div id="quizBox" style="display:none;">
+    <h4 class="mb-3">Soal Pilihan Ganda</h4>
+    <form id="quizForm"></form>
+    <button class="btn btn-success mt-3" onclick="submitQuiz()">Selesai</button>
+  </div>
+</div>
+
+<!-- Fixed Footer -->
+<footer class="bg-dark text-white text-center py-2 fixed-bottom shadow">
+  <div class="container">
+    <small>SKS &copy; 2025 by Oski | Sekarang Kerjakan Saja</small>
+  </div>
+</footer>
+
+<script>
+const questions = [
+  {q:"1. Ciri-ciri jaringan komputer adalah sebagai berikut ini, kecuali….", options:["Berbagi pakai perangkat keras (hardware)","Berbagi pakai perangkat lunak (software)","Berbagi user (brainware)","Berbagi saluran komunikasi (internet)","Berbagi data dengan mudah."], answer:"c"},
+  {q:"2. Setiap komputer yang terhubung ke jaringan dapat bertindak baik sebagai workstation maupun server disebut jaringan …", options:["Peer to peer","Client and server","Local Area Network","Bus","Tree"], answer:"a"},
+  {q:"3. Salah satu tipe jaringan komputer yang umum dijumpai adalah….", options:["Star","Bus","WAN","Wireless","Client-server"], answer:"e"},
+  {q:"4. … adalah sebuah perangkat untuk meneruskan Internet ke client yang terhubung dengan server.", options:["Proxy","Switch","Router","Gateway","Gatekeeper"], answer:"b"},
+  {q:"5. Skema desain pembangunan sebuah jaringan komputer dikenal dengan istilah….", options:["Tipe","Topologi","Geografi","Skalabilitas","Media transmisi"], answer:"b"},
+  {q:"6. Berikut ini jenis topologi jaringan komputer, kecuali ….", options:["Star","Bus","Ring","Mesh","Three"], answer:"e"},
+  {q:"7. Salah satu keuntungan jaringan komputer menggunakan topologi bus adalah ….", options:["Deteksi dan isolasi kesalahan sangat kecil","Kepadatan lalu lintas pada jalur utama","Diperlukan repeater untuk jarak jauh","Lay out kabel kompleks","Pengembangan jaringan atau penambahan workstation baru dapat dilakukan dengan mudah tanpa menggangu workstation lain."], answer:"d"},
+  {q:"8. Kombinasi pengkabelan straight pada jaringan komputer yang sesuai dengan standart internasional adalah ….", options:["White orange – orange - white green – blue - white blue - green – white brown - brown","White orange – orange - white green – green - white blue - blue – white brown - brown","White green – green - white orange – blue - white blue - orange – white brown - brown","White orange – orange - white green - green - white blue - blue – white brown - brown","Orange – white orange – green – white green - white blue - blue – white brown - brown"], answer:"a"},
+  {q:"9. IP Address 126.46.5.6 termasuk dalam IP Address kelas ….", options:["A","B","C","D","E"], answer:"a"},
+  {q:"10. Software utiliti yang bekerja pada komputer dan didesain untuk memberikan IP Address ke komputer disebut ….", options:["DNS","Gateway","Protokol","DHCP","Ipconfig"], answer:"d"},
+  {q:"11. Perintah “PING” pada jaringan digunakan untuk hal-hal yang berikut ini, kecuali …", options:["Menguji fungsi kirim sebuah NIC","Menguji fungsi terima sebuah NIC","Menguji kesesuaian sebuah NIC","Menguji konfigurasi TCP/IP","Menguji koneksi jaringan"], answer:"d"},
+  {q:"12. Untuk melihat indikasi pada konfigurasi IP yang terpasang pada komputer kita digunakan perintah ….", options:["Ping","IPConfig","Tracert","Traceroute","Nslookup"], answer:"a"},
+  {q:"13. Tipe file yang digunakan oleh linux secara umum adalah ….", options:["INF","FAT","NTFS","EXT3","FAT32"], answer:"d"},
+  {q:"14. Umumnya apabila kita memiliki RAM sebesar 128 MB, maka alokasi minimal yang direkomendasikan untuk partisi linux swap adalah ….", options:["0 MB","64 MB","128 MB","256 MB","512 MB"], answer:"d"},
+  {q:"15. Untuk mengubah urut-urutan booting sebelum melakukan instalasi sistem operasi, kita harus melakukan setting pada ….", options:["BIOS","Kernel","TCP/IP","Windows","IP address"], answer:"a"},
+  {q:"16. Pembagian ruang dalam sebuah hardisk diistilahkan dengan ….", options:["Divisi","Partisi","Kernel","File system","Sistem Operasi"], answer:"b"},
+  {q:"17. Kemampuan sistem operasi untuk menjalankan berbagai perintah dalam waktu bersamaan disebut ….", options:["Multi user","Pipelining","Threading","Multking","Management"], answer:"d"},
+  {q:"18. Inti sebuah sistem operasi disebut ….", options:["Core","Linux","Kernel","Compiler","Windows"], answer:"c"},
+  {q:"19. Sistem yang bertugas mengatur semua perangkat lunak dan keras dalam sebuah komputer sehingga dapat digunakan oleh user disebut sebagai ….", options:["Sistem Operasi","Sistem Komputer","Sistem Manajemen","Sistem Pengaturan","Sistem Operasional"], answer:"a"},
+  {q:"20. Berapa kecepatan akses data pada access point yang memiliki standar kode IEEE 802.11g ….", options:["11Mb/s","54Mb/s","108Mb/s","216Mb/s","432Mb/s"], answer:"b"},
+  {q:"21. Berapa kecepatan akses data pada access point yang memiliki standar kode IEEE 802.11b ….", options:["11Mb/s","54Mb/s","108Mb/s","216Mb/s","432Mb/s"], answer:"a"},
+  {q:"22. Berapa frekuensi antena pada sebuah access point (WiFi)….", options:["2.4Ghz","3.1Ghz","1.9Ghz","5.2Ghz","4.2Ghz"], answer:"a"},
+  {q:"23. Teks perintah untuk melihat tabel routing pada Windows adalah ….", options:["route –n","route –a","route PRINT","route –D","route -t"], answer:"c"},
+  {q:"24. Teks perintah untuk memeriksa IP address yang kita miliki di Linux adalah ….", options:["config","setconfig","read config","ipconfig","ifconfig"], answer:"e"},
+  {q:"25. Teks perintah untuk memeriksa IP address yang kita miliki di Windows adalah …", options:["config","setconfig","read config","ipconfig","ifconfig"], answer:"d"},
+  {q:"26. Teks perintah untuk memeriksa apakah koneksi jaringan kita sudah terhubung ke depdiknas.org adalah ….", options:["ls depdiknas.org","vi depdiknas.org","cp depdiknas.org","ping depdiknas.org","install depdiknas.org"], answer:"d"},
+  {q:"27. Salah satu aplikasi proxy server di sistem operasi Linux adalah ….", options:["Squid","Postfix","Squirrel","Apache","Postgres"], answer:"a"},
+  {q:"28. Perangkat yang berfungsi mengatur pemilihan jalur terbaik untuk dilewati paket data dikenal sebagai ….", options:["Switch","Router","Web server","Proxy server","Name server"], answer:"b"},
+  {q:"29. Komputer yang bertugas menyimpan informasi halaman web yang pernah diakses sebelumnya adalah ….", options:["Router","Web server","Proxy server","Name server","Database server"], answer:"c"},
+  {q:"30. Perangkat yang berfungsi sebagai repeater dan sekaligus concentrator dalam sebuah jaringan komputer adalah ….", options:["Hub/Switch","Server","Router","Kabel UTP","Connector"], answer:"a"},
+  {q:"31. Antar muka yang bertugas menerjemahkan satuan informasi terkecil di layer fisik adalah ….", options:["NIC/Lan Card","USB","RJ 45","Firewire","Kabel UTP"], answer:"a"},
+  {q:"32. 192.168.0.10 merupakan contoh pemberian alamat pada sebuah komputer yang akan dihubungkan dalam sebuah jaringan. Angka-angka tersebut dikenal dengan ….", options:["TCP/IP","Domain","Protokol","IP Address","Konfigurasi"], answer:"d"},
+  {q:"33. Satuan informasi terkecil yang dikenal dalam komunikasi data adalah ….", options:["Bit","Byte","Label","Packet","Segment"], answer:"a"},
+  {q:"34. IP Address yang menunjukkan nomor jaringan (identitas segmen) disebut dengan …", options:["Net ID","Host ID","IP Broadcast","IP Public","IP Private"], answer:"c"},
+  {q:"35. Angka 32 bit yang digunakan untuk membedakan Net ID dan Host ID disebut …", options:["Subnet Mask","Submask","IP Broadcast","IP Public","IP Private"], answer:"c"},
+  {q:"36. Subnet mask yang digunakan jaringan kelas A adalah…", options:["255.255.255.0","255.255.0.0","255.0.0.0","255.255.255.255","10.0.0.1"], answer:"c"},
+  {q:"37. Penulisan IP Address 11000000.10101000.00000001.00001000 dalam bentuk desimal ditulis sebagai berikut ….", options:["192.168.1.8","192.158.1.8","191.168.1.8","190.168.1.8","192.169.1.8"], answer:"a"},
+  {q:"38. Penulisan IP Address 10.208.15.240 dalam bentuk binary ditulis sebagai berikut ….", options:["00001010.11010000.00001111.11111000","00001010.11010000.00001111.11100000","00001010.11010000.00001111.11110000","00001010.11010000.00001111.11010000","00001010.11010000.00001111.10110000"], answer:"c"},
+  {q:"39. Tata cara atau peraturan yang disepakati secara internasional agar sebuah komputer bisa berkomunikasi dengan komputer lainnya disebut ….", options:["Proxy","Protocol","Prosedur","Proposal","Program"], answer:"b"},
+  {q:"40. Software utiliti yang bekerja pada komputer dan didesain untuk memberikan IP Address ke komputer disebut ….", options:["DNS","Gateway","Protokol","DHCP","Ipconfig"], answer:"d"},
+  {q:"41. Suatu sistem yang memungkinkan nama suatu host pada jaringan komputer atau internet ditranslasikan menjadi IP address disebut ….", options:["DNS","Gateway","Protokol","DHCP","Ipconfig"], answer:"a"},
+  {q:"42. Untuk membuat berbagi pakai koneksi internet (internet connection sharing), minimal komputer yang diperlukan sebanyak ….", options:["1","2","3","4","5"], answer:"b"},
+  {q:"43. Dalam konfigurasi berbagi pakai koneksi internet (internet connection sharing), IP Address komputer client yang digunakan dimulai pada alamat …", options:["192.168.0.1","192.168.0.2","10.0.0.1","127.0.0.1","202.15.0.1"], answer:"a"},
+  {q:"44. Dalam konfigurasi berbagi pakai koneksi internet (internet connection sharing), komputer yang tersambung dengan internet akan berfungsi sebagai …", options:["client","server / gateway","dump","switch","router"], answer:"b"},
+  {q:"45. Istilah ttl dalam perintah ping dimaksudkan …", options:["Time to loose","Time to live","Time to leave","Time to los","Time to lie"], answer:"d"},
+  {q:"46. Perintah untuk mengetahui jalur / rute suatu domain komputer / website mengguna-kan pada system operasi Ms.Windows XP adalah ………", options:["ping","traceroute","tracert","ipconfig","ifconfig"], answer:"b"},
+  {q:"47. Perintah untuk mengetahui jalur / rute suatu domain komputer / website mengguna-kan pada system Linux adalah ………", options:["ping","traceroute","tracert","ipconfig","ifconfig"], answer:"c"},
+  {q:"48. Direktory yang dipergunakan untuk menyimpan file-file penting yang digunakan untuk pemeliharaan system operasi linux adalah ………", options:["/home","/ect","/tmp","/bin","/var"], answer:"c"},
+  {q:"49. Untuk membuat direktori didalam system operasi linux digunakan perintah…", options:["cat","cd","chmod","md","mkdir"], answer:"e"},
+  {q:"50. Yang bukan merupakan perintah mengakhiri linux adalah…", options:["Shutdown –h now","Halt","Shutdown –r now","Reebot","Quit"], answer:"a"}
+];
+
+let usedUsernames = JSON.parse(localStorage.getItem("usedUsernames")) || [];
+let currentUser = "";
+
+function startQuiz(){
+  const username = document.getElementById("username").value.trim();
+  if(!username){
+    Swal.fire("Error","Nama tidak boleh kosong!","error");
+    return;
+  }
+  if(usedUsernames.includes(username)){
+    Swal.fire("Error","Nama sudah digunakan!","error");
+    return;
+  }
+  currentUser = username;
+  usedUsernames.push(username);
+  localStorage.setItem("usedUsernames", JSON.stringify(usedUsernames));
+
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("quizBox").style.display = "block";
+  loadQuestions();
+}
+
+function loadQuestions(){
+  const quizForm = document.getElementById("quizForm");
+  quizForm.innerHTML = "";
+  questions.forEach((q,i)=>{
+    let opts = "";
+    q.options.forEach((opt,idx)=>{
+      const letter = String.fromCharCode(97+idx);
+      opts += `
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="q${i}" value="${letter}" id="q${i}_${letter}">
+          <label class="form-check-label" for="q${i}_${letter}">${letter}. ${opt}</label>
+        </div>
+      `;
+    });
+    quizForm.innerHTML += `
+      <div class="mb-3 p-3 border rounded bg-white shadow-sm">
+        <p><strong>${q.q}</strong></p>
+        ${opts}
+      </div>
+    `;
+  });
+}
+
+function submitQuiz(){
+  let score = 0;
+  questions.forEach((q,i)=>{
+    const chosen = document.querySelector(`input[name="q${i}"]:checked`);
+    if(chosen && chosen.value === q.answer){
+      score += 10;
+    }
+  });
+  Swal.fire("Selesai","Skor Anda: "+score,"success");
+}
+</script>
+
+</body>
+</html>
